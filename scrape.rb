@@ -1,4 +1,19 @@
-#!/usr/bin/env ruby
+# $ruby scrape.rb INPUT-FILE HOST OUTPUT GET-COMMENTS
+# 
+# This script takes in a list of urls (input) and a host website string, and 
+# it creates json object sfor each article. It then prints each JSON object to
+# the given output file.
+#
+# The host werbsite needs to be one of the Kinja sites. URLs need to be in a valid
+# format, as indicated in VALID_REGEX. The script handles invalid urls (ex. gaw.com).
+# 
+# GET-COMMENTS is a boolean that tells the script whether to also process comments.
+# 
+# Defaults
+# * INPUT-FILE= "gawker_urls.txt"
+# * HOST= "gawker"
+# * OUTPUT= "output.json"
+# * GET-COMMENTS= false
 
 require 'open-uri'
 require 'nokogiri'
@@ -11,10 +26,7 @@ require 'pp'
 # 1 Setup
 ###############################################################################
 
-HOST            = 'http://gawker.com'
-VALID_REGEX		= /^http:\/\/\w*\.?gawker.com\/\d+\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
-BRANCH_REGEX 	= /(\w+).gawker.com/
-
+host           	= 'gawker'
 input			= 'gawker_urls.txt'
 output			= File.open("output.json","w+")
 browser 		= Watir::Browser.new :chrome
@@ -22,16 +34,16 @@ links 			= []
 get_comments	= false
 
 if ARGV.length > 0 then input = ARGV[0] end
-if ARGV.length > 1 then output = ARGV[1] end
-if ARGV.length > 2 then get_comments = ARGV[2].to_b end
+if ARGV.length > 1 then host = ARGV[1] end
+if ARGV.length > 2 then output = File.open(ARGV[2], "w+") end
+if ARGV.length > 3 then get_comments = ARGV[3].to_b end
+
+VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/\d+\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
+BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
 ###############################################################################
 # 2 Scrape
 ###############################################################################
-
-# get article links from homepage
-# page = Nokogiri::HTML(open(HOST))
-# for h1 in page.css('h1.headline.h5.hover-highlight.entry-title') do links << h1.css('a')[0]['href'] end
 
 # get article links from text file
 links = File.readlines(input).map { |e| e.chomp!  }
@@ -39,11 +51,12 @@ links = File.readlines(input).map { |e| e.chomp!  }
 # get attributes from each article
 for link in links
 
+	# if link is not valid, skip
 	if !(link =~ VALID_REGEX) then next end
 
 	browser.goto link
-	article = OpenStruct.new
 	
+	article = OpenStruct.new
 	article.link = link
 
 	begin
@@ -72,9 +85,10 @@ for link in links
 		# if comments are requested for
 		if get_comments == true
 			article.comments = []
-			
+
 			browser.link(:text => "All replies").when_present(5).click
 			browser.wait
+			
 			sleep(5)
 
 			# for each branch
