@@ -1,4 +1,6 @@
-# $ruby scrape.rb INPUT-FILE HOST OUTPUT GET-COMMENTS
+# encoding: utf-8
+
+# $ruby scrape.rb INPUT-FOLDER HOST OUTPUT GET-COMMENTS
 # 
 # This script takes in a list of urls (input) and a host website string, and 
 # it creates json object sfor each article. It then prints each JSON object to
@@ -10,7 +12,7 @@
 # GET-COMMENTS is a boolean that tells the script whether to also process comments.
 # 
 # Defaults
-# * INPUT-FILE= "gawker_urls.txt"
+# * INPUT-FOLDER= "../output/1000-article-htmls/"
 # * HOST= "gawker"
 # * OUTPUT= "output.json"
 # * GET-COMMENTS= false
@@ -19,6 +21,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'ostruct'
 require 'watir'
+require 'json'
 require 'pp'
 
 
@@ -26,11 +29,11 @@ require 'pp'
 # 1 Setup
 ###############################################################################
 
+NUM_THREADS 	= 1
+
 host           	= 'gawker'
-input			= 'gawker_urls.txt'
-output			= File.open("output.json","w+")
-browser 		= Watir::Browser.new :chrome
-links 			= []
+input			= '../output/1000-article-htmls'
+output			= File.open("../output/output.json","w+")
 get_comments	= false
 
 if ARGV.length > 0 then input = ARGV[0] end
@@ -41,86 +44,147 @@ if ARGV.length > 3 then get_comments = ARGV[3].to_b end
 VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/\d+\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
 BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
+filepaths = Dir.glob("#{input}/*")
+filepaths = filepaths.each_slice( (filepaths.length / NUM_THREADS.to_f).round ).to_a
+
+output.sync = true
+
 ###############################################################################
 # 2 Scrape
 ###############################################################################
 
-# get article links from text file
-links = File.readlines(input).map { |e| e.chomp!  }
 
-# get attributes from each article
-for link in links
+#  threading
+threads = (0...NUM_THREADS).map do |i|
+    Thread.new(i) do |i|
 
-	# if link is not valid, skip
-	if !(link =~ VALID_REGEX) then next end
-
-	browser.goto link
-	
-	article = OpenStruct.new
-	article.link = link
-
-	begin
-		browser.wait
-
-		begin
-			article_page 			= Nokogiri::HTML.parse(browser.html)
-
-			article.title 			= article_page.css('h1.headline a')[0].text
-			article.author 			= article_page.css('.author a').first.text
-			article.date_published 	= article_page.css('.published,.updated').first.text
-			article.likes 			= article_page.css('span.js_like_count').first.text
-			article.views 			= article_page.css('.view-count').first.text
-			article.tags 			= article_page.css('a.first-tag,div#taglist').text.split("\t") # TODO: handle cases of 0 or 1 tag
-			article.branch 			= (BRANCH_REGEX =~ link) ? "#{$1}" : "gawker"
-			article.is_sponsored 	= (article_page.css('.sponsored-label').length != 0) ? true : false
-			article.pic_count 		= article_page.css('article img').length
-			article.content 		= article_page.css('div.post-content.entry-content p').map { |e| e.text }.join('\n')
-
-		rescue NoMethodError
-			sleep(0.1)
-			retry
-
-		end
-
-		# if comments are requested for
-		if get_comments == true
-			article.comments = []
-
-			browser.link(:text => "All replies").when_present(5).click
-			browser.wait
+		for filepath in filepaths[i]
 			
-			sleep(5)
+			f = File.open(filepath)
+			if f.size == 0 then pp "NO HTML"; next end
+			article_page = Nokogiri::HTML(f)
+			f.close
 
-			# for each branch
-			article_page.css('div.js_branch').map { |branch|
+			begin
+				article = OpenStruct.new
 
-				author 			= branch.css('.js_reply')[0]['data-authorname']
-				author_comment 	= branch.css('.js_reply div.reply-content').text
-				res 			= [[author, author_comment]]
+				# link
+				if (nodeset = article_page.css('.headline.entry-title a')).length > 0
+					article.link = nodeset.first['href']
+				else
+					pp "NO LINK"
+					next
+				end
 
-				# for each reply in branch
-				branch.css('section.timeline-replies .js_reply').map { |reply|
-					a = reply.css('.display-name a').text
-					c = reply.css('div.reply-content').text
+				# title
+				article.title 			= article_page.css('.headline.entry-title a').first.text
 
-					res << [a,c]
-				}
+				# author
+				if (nodeset = article_page.css('.author a')).length > 0
+					article.author = nodeset.first.text
+				else
+					pp "NO AUTHOR"
+					next
+				end
+
+				# date published
+				if (nodeset = article_page.css('.published,.updated')).length > 0
+					article.date_published = nodeset.first.text
+				else
+					pp "NO DATE PUBLISHED"
+					next
+				end
+
+				# like count
+				if (nodeset = article_page.css('span.js_like_count')).length > 0
+					if (text = nodeset.first.text).length > 0
+						article.likes = text.scan(/\d+/).join().to_i
+					else
+						article.likes = 0
+					end
+				else
+					pp "NO LIKE COUNT"
+					next
+				end
+
+				# view count
+				if (nodeset = article_page.css('.view-count')).length > 0
+					if (text = nodeset.first.text).length > 0
+						article.views = text.scan(/\d+/).join().to_i
+					else
+						article.views = 0
+					end
+				else
+					pp "NO VIEW COUNT"
+					next
+				end
+
+				# tags
+				if (nodeset = article_page.css('a.first-tag,div#taglist')).length > 0
+					article.tags = nodeset.text.split("\t")
+				else
+					pp "NO TAGS"
+					next
+				end
 				
-				article.comments << res
-			}
+				# branch from main site
+				article.branch 			= (BRANCH_REGEX =~ article.link) ? $1 : "gawker"
 
-		end
+				# is a sponsored article
+				article.is_sponsored 	= (article_page.css('.sponsored-label').length != 0) ? true : false
 
-	output.write(article.to_json)
+				# article pic count
+				article.pic_count 		= article_page.css('.post-content img').length
 
-	break
+				# article content
+				article.content 		= article_page.css('div.post-content.entry-content p').map { |e| e.text }.join('\n')
 
-	rescue TimeoutError
-		# handles when browser wait times out
-		retry
 
-	end
+			rescue NoMethodError => e
+				if e.backtrace.inspect =~ /scrape.rb:(\d+)/
+					pp "Skipping #{filepath} because of NoMethodError; line #{$1}"
+				end
+				next
+			end
+
+			# if comments are requested for
+			if get_comments == true
+				article.comments = []
+
+				browser.link(:text => "All replies").when_present(5).click
+				browser.wait
+				
+				sleep(5)
+
+				# for each branch
+				article_page.css('div.js_branch').map { |branch|
+
+					author 			= branch.css('.js_reply')[0]['data-authorname']
+					author_comment 	= branch.css('.js_reply div.reply-content').text
+					res 			= [[author, author_comment]]
+
+					# for each reply in branch
+					branch.css('section.timeline-replies .js_reply').map { |reply|
+						a = reply.css('.display-name a').text
+						c = reply.css('div.reply-content').text
+
+						res << [a,c]
+					}
+					
+					article.comments << res
+				}
+
+			end
+
+			# write JSON to output
+			output.puts(article.to_h.to_json)
+
+		end  	
+  	end
 end
 
-browser.close
+threads.each {|t| t.join}
+
+
+
 
