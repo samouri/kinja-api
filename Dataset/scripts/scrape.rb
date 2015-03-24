@@ -137,8 +137,12 @@ threads = (0...NUM_THREADS).map do |i|
 				article.pic_count 		= article_page.css('.post-content img').length
 
 				# article content
-				article.content 		= article_page.css('div.post-content.entry-content p').map { |e| e.text }.join('\n')
-
+				if (nodeset = article_page.css('div.post-content.entry-content p')).length > 0
+					article.content = nodeset.map { |e| e.text }.join('\n')
+				elsif (nodeset = article_page.css('div.post-content.entry-content')).length > 0
+					# handles old format where text isn't in p tags
+					article.content = nodeset.text
+				end
 
 			rescue NoMethodError => e
 				if e.backtrace.inspect =~ /scrape.rb:(\d+)/
@@ -149,12 +153,8 @@ threads = (0...NUM_THREADS).map do |i|
 
 			# if comments are requested for
 			if get_comments == true
-				article.comments = []
-
-				browser.link(:text => "All replies").when_present(5).click
-				browser.wait
 				
-				sleep(5)
+				article.comments = []
 
 				# for each branch
 				article_page.css('div.js_branch').map { |branch|
@@ -175,7 +175,7 @@ threads = (0...NUM_THREADS).map do |i|
 				}
 
 			end
-
+			
 			# write JSON to output
 			output.puts(article.to_h.to_json)
 
@@ -184,7 +184,4 @@ threads = (0...NUM_THREADS).map do |i|
 end
 
 threads.each {|t| t.join}
-
-
-
 
