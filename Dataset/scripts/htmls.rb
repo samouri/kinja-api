@@ -21,7 +21,7 @@ require 'pp'
 # 1 Setup
 ###############################################################################
 
-NUM_THREADS		= 5
+NUM_THREADS		= 1
 
 host 			= "gawker"
 input 			= '../input/filtered_gawker_urls.txt'
@@ -41,44 +41,27 @@ VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/\d+\/([\w-]+)/ # http
 # get article links from text file, split into suba-rrays to give to each thread
 links = File.readlines(input).map { |e| e.chomp!  } # 140,431 links
 links = links.each_slice( (links.size / NUM_THREADS.to_f).round ).to_a
+browsers = (1..NUM_THREADS).map { |x| Watir::Browser.new :chrome }
 
 #  threading
 threads = (0...NUM_THREADS).map do |i|
-    Thread.new(i) do |i|
-
-    	browser = Watir::Browser.new :chrome
-
+    Thread.new do
+    	browser = browsers[i]
 		for link in links[i]
-			begin
-				browser.goto link
-				Watir::Wait.until {browser.html.include? "\"view-count\""}
-
-				if browser.html.length == 0 or !(browser.html.include? "\"view-count\"")
-					# handles when nothing was loaded, or view-count still isn't there
-					pp "redoing"
-					redo
-				end
-
-				if link =~ VALID_REGEX
-					title = $1
-				else
-					raise "invalid link"
-				end
-
-				File.open("#{output}#{title}.html", 'w+') {|f| f.write(browser.html) }
-
-			rescue Watir::Wait::TimeoutError
-				# handles when browser wait times out
-				pp "retrying"
-				retry
-
-			end
+            browser.goto link
+            sleep(0.1) until browser.html.include?("\"view-count\"")
+            path = URI.parse(link).path.gsub(/[^0-9a-z.-]/i, '') # only keep alphanumeric
+            p path
+            File.open("#{output}#{path}.html", 'w+') {|f| f.write(browser.html) }
+            p "successs"
 		end
-
-		browser.close
-
   	end
 end
- 
-threads.each {|t| t.join}
 
+begin 
+    threads.each {|t| t.join}
+rescue SystemExit, Interrupt 
+    p 'exiting because of siging'
+ensure
+    browsers.each do |b| b.close end
+end
