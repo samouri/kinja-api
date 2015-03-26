@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # encoding: utf-8
 
 # $ruby scrape.rb INPUT-FOLDER HOST OUTPUT GET-COMMENTS
@@ -19,11 +21,9 @@
 
 require 'open-uri'
 require 'nokogiri'
-require 'ostruct'
-require 'watir'
 require 'json'
 require 'pp'
-
+require 'ruby-progressbar'
 
 ###############################################################################
 # 1 Setup
@@ -32,8 +32,8 @@ require 'pp'
 NUM_THREADS 	= 1
 
 host           	= 'gawker'
-input			= '../output/1000-article-htmls'
-output			= File.open("../output/output.json","w+")
+input			= '../output/htmls'
+output			= File.open("../output/articles.json","w+")
 get_comments	= false
 
 if ARGV.length > 0 then input = ARGV[0] end
@@ -45,6 +45,7 @@ VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/\d+\/[\w-]+/ # http:/
 BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
 filepaths = Dir.glob("#{input}/*")
+num_articles = filepaths.length
 filepaths = filepaths.each_slice( (filepaths.length / NUM_THREADS.to_f).round ).to_a
 
 output.sync = true
@@ -53,134 +54,136 @@ output.sync = true
 # 2 Scrape
 ###############################################################################
 
+pb = ProgressBar.create(:format     => '%a %B %p%% %r articles/sec', :total => num_articles)
 
 #  threading
 threads = (0...NUM_THREADS).map do |i|
     Thread.new(i) do |i|
 
-		for filepath in filepaths[i]
-			
-			f = File.open(filepath)
-			if f.size == 0 then pp "NO HTML"; next end
-			article_page = Nokogiri::HTML(f)
-			f.close
+        for filepath in filepaths[i]
 
-			begin
-				article = OpenStruct.new
+            f = File.open(filepath)
+            if f.size == 0 then next end #pp "NO HTML"; next end
+            article_page = Nokogiri::HTML(f)
+            f.close
 
-				# link
-				if (nodeset = article_page.css('.headline.entry-title a')).length > 0
-					article.link = nodeset.first['href']
-				else
-					pp "NO LINK"
-					next
-				end
+            begin
+                article = {}
 
-				# title
-				article.title 			= article_page.css('.headline.entry-title a').first.text
+                # link
+                if (nodeset = article_page.css('.headline.entry-title a')).length > 0
+                    article['link'] = nodeset.first['href']
+                else
+                    #pp "NO LINK"
+                    next
+                end
 
-				# author
-				if (nodeset = article_page.css('.author a')).length > 0
-					article.author = nodeset.first.text
-				else
-					pp "NO AUTHOR"
-					next
-				end
+                # title
+                article['title'] 			= article_page.css('.headline.entry-title a').first.text
 
-				# date published
-				if (nodeset = article_page.css('.published,.updated')).length > 0
-					article.date_published = nodeset.first.text
-				else
-					pp "NO DATE PUBLISHED"
-					next
-				end
+                # author
+                if (nodeset = article_page.css('.author a')).length > 0
+                    article['author'] = nodeset.first.text
+                else
+                    #pp "NO AUTHOR"
+                    next
+                end
 
-				# like count
-				if (nodeset = article_page.css('span.js_like_count')).length > 0
-					if (text = nodeset.first.text).length > 0
-						article.likes = text.scan(/\d+/).join().to_i
-					else
-						article.likes = 0
-					end
-				else
-					pp "NO LIKE COUNT"
-					next
-				end
+                # date published
+                if (nodeset = article_page.css('.published,.updated')).length > 0
+                    article['date_published'] = nodeset.first.text
+                else
+                    #pp "NO DATE PUBLISHED"
+                    next
+                end
 
-				# view count
-				if (nodeset = article_page.css('.view-count')).length > 0
-					if (text = nodeset.first.text).length > 0
-						article.views = text.scan(/\d+/).join().to_i
-					else
-						article.views = 0
-					end
-				else
-					pp "NO VIEW COUNT"
-					next
-				end
+                # like count
+                if (nodeset = article_page.css('span.js_like_count')).length > 0
+                    if (text = nodeset.first.text).length > 0
+                        article['likes'] = text.scan(/\d+/).join().to_i
+                    else
+                        article['likes'] = 0
+                    end
+                else
+                    #pp "NO LIKE COUNT"
+                    next
+                end
+=begin
+                # view count
+                if (nodeset = article_page.css('.view-count')).length > 0
+                    if (text = nodeset.first.text).length > 0
+                        article.views = text.scan(/\d+/).join().to_i
+                    else
+                        article.views = 0
+                    end
+                else
+                    #pp "NO VIEW COUNT"
+                    next
+                end
+TODO: add viewcount in 
+=end
+                # tags
+                if (nodeset = article_page.css('a.first-tag,div#taglist')).length > 0
+                    article['tags'] = nodeset.text.split("\t")
+                else
+                    #pp "NO TAGS"
+                    next
+                end
 
-				# tags
-				if (nodeset = article_page.css('a.first-tag,div#taglist')).length > 0
-					article.tags = nodeset.text.split("\t")
-				else
-					pp "NO TAGS"
-					next
-				end
-				
-				# branch from main site
-				article.branch 			= (BRANCH_REGEX =~ article.link) ? $1 : "gawker"
+                # branch from main site
+                article['branch'] 			= (BRANCH_REGEX =~ article['link']) ? $1 : "gawker"
 
-				# is a sponsored article
-				article.is_sponsored 	= (article_page.css('.sponsored-label').length != 0) ? true : false
+                # is a sponsored article
+                article['is_sponsored'] 	= (article_page.css('.sponsored-label').length != 0) ? true : false
 
-				# article pic count
-				article.pic_count 		= article_page.css('.post-content img').length
+                # article pic count
+                article['pic_count'] 		= article_page.css('.post-content img').length
 
-				# article content
-				if (nodeset = article_page.css('div.post-content.entry-content p')).length > 0
-					article.content = nodeset.map { |e| e.text }.join('\n')
-				elsif (nodeset = article_page.css('div.post-content.entry-content')).length > 0
-					# handles old format where text isn't in p tags
-					article.content = nodeset.text
-				end
+                # article content
+                if (nodeset = article_page.css('div.post-content.entry-content p')).length > 0
+                    article['content'] = nodeset.map { |e| e.text }.join('\n')
+                elsif (nodeset = article_page.css('div.post-content.entry-content')).length > 0
+                    # handles old format where text isn't in p tags
+                    article['content'] = nodeset.text
+                end
 
-			rescue NoMethodError => e
-				if e.backtrace.inspect =~ /scrape.rb:(\d+)/
-					pp "Skipping #{filepath} because of NoMethodError; line #{$1}"
-				end
-				next
-			end
+            rescue NoMethodError => e
+                if e.backtrace.inspect =~ /scrape.rb:(\d+)/
+                    pp "Skipping #{filepath} because of NoMethodError; line #{$1}"
+                end
+                next
+            end
 
-			# if comments are requested for
-			if get_comments == true
-				
-				article.comments = []
+            # if comments are requested for
+            if get_comments == true
 
-				# for each branch
-				article_page.css('div.js_branch').map { |branch|
+                article['comments'] = []
 
-					author 			= branch.css('.js_reply')[0]['data-authorname']
-					author_comment 	= branch.css('.js_reply div.reply-content').text
-					res 			= [[author, author_comment]]
+                # for each branch
+                article_page.css('div.js_branch').map { |branch|
 
-					# for each reply in branch
-					branch.css('section.timeline-replies .js_reply').map { |reply|
-						a = reply.css('.display-name a').text
-						c = reply.css('div.reply-content').text
+                    author 			= branch.css('.js_reply')[0]['data-authorname']
+                    author_comment 	= branch.css('.js_reply div.reply-content').text
+                    res 			= [[author, author_comment]]
 
-						res << [a,c]
-					}
-					
-					article.comments << res
-				}
+                    # for each reply in branch
+                    branch.css('section.timeline-replies .js_reply').map { |reply|
+                        a = reply.css('.display-name a').text
+                        c = reply.css('div.reply-content').text
 
-			end
-			
-			# write JSON to output
-			output.puts(article.to_h.to_json)
+                        res << [a,c]
+                    }
 
-		end  	
-  	end
+                    article['comments'] << res
+                }
+
+            end
+
+            # write JSON to output
+            output.puts(article.to_json)
+            pb.increment()
+        end  	
+    end
 end
 
 threads.each {|t| t.join}

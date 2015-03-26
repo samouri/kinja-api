@@ -5,7 +5,7 @@ html() {
   regex="[^0-9a-z.-]"
   filename="$(echo $url | sed s/"$regex"//g)"
 
-   curl --silent "${url}" > "../outputs/htmlh/${filename}"
+   curl --silent "${url}" > "../output/htmls/${filename}"
 }
 export -f html
 
