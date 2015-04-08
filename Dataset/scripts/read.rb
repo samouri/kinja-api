@@ -4,14 +4,11 @@ require 'ostruct'
 require 'json'
 require 'pp'
 
-filename = "../output/output.json"
+source = "articles_complete.json"
 articles = []
 
-File.open(filename, "r:UTF-8") { |f|
-	articles = f.readlines.map { |e| JSON.parse(e.chomp!) }
+File.open(source, "r:UTF-8") { |f|
+	articles = JSON.parse(f.read)
 }
- 
-pp articles
 
-
-
+pp articles[0]

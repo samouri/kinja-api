@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Script has issues where output is in wrong order
+
 json() { 
   regex="([0-9]{5,20})"
   url="$1";
@@ -9,7 +11,10 @@ json() {
   unique="$( echo "${viewcount}" | grep -Po '"unique":.*?[^\\],' | sed 's/[^0-9]*//g')"
   nonUnique="$( echo "${viewcount}" | grep -Po '"nonUnique":.*?[^\\],' | sed 's/[^0-9]*//g')"
   
-  echo "'$id': {'unique': $unique, 'nonUnique': $nonUnique},";
+  if [ ${#unique} -eq 0 ]; then unique=0; fi
+  if [ ${#nonUnique} -eq 0 ]; then nonUnique=0; fi
+
+  echo "\"$id\": {\"unique\": $unique, \"nonUnique\": $nonUnique},";
 }
 export -f json
 
@@ -18,6 +23,6 @@ echo "{"
 
 cat ../input/filtered_gawker_urls.txt | xargs -I {} -P 20 -n 1 -s 9999999999  bash -c "json {}"
 
-echo "'-1': {'finished': true }"
+echo "\"-1\": {\"finished\": true }"
 echo "}"
 

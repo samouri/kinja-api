@@ -41,7 +41,7 @@ if ARGV.length > 1 then host = ARGV[1] end
 if ARGV.length > 2 then output = File.open(ARGV[2], "w+") end
 if ARGV.length > 3 then get_comments = ARGV[3].to_b end
 
-VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/\d+\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
+VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/(\d+)\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
 BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
 filepaths = Dir.glob("#{input}/*")
@@ -77,6 +77,9 @@ threads = (0...NUM_THREADS).map do |i|
                     #pp "NO LINK"
                     next
                 end
+
+                # id
+                article['id']               = VALID_REGEX.match(article['link'])[1]
 
                 # title
                 article['title'] 			= article_page.css('.headline.entry-title a').first.text
