@@ -4,11 +4,12 @@ require 'ostruct'
 require 'json'
 require 'pp'
 
-source = "articles_complete.json"
+source = "../output/articles_complete.json"
 articles = []
 
 File.open(source, "r:UTF-8") { |f|
 	articles = JSON.parse(f.read)
 }
 
-pp articles[0]
+# 97848 articles_complete
+# pp articles.length
