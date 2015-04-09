@@ -16,7 +16,7 @@ from sklearn import linear_model
 # Read In Article Data
 ###############################################################################
 
-filename = "../output/articles_complete.json"
+filename = "../Dataset/output/articles_complete.json"
 
 ''' this section is for reading a json file with multiple json objects in it (ruby does this but python does not allow it)
     this was ripped from stackoverflow: http://stackoverflow.com/questions/22112439/valueerror-extra-data-while-loading-json '''
@@ -75,8 +75,8 @@ def content_filter(x):
         print x['id']
         return False
 
-# KEEP FILTERED DATA LENGTH TO LESS THAN 10,000
-filtered = filter(content_filter, data)[0:2000]
+""" KEEP FILTERED DATA LENGTH TO LESS THAN 10,000 """
+filtered = filter(content_filter, data)[0:1001]
 
 #######################################
 # Pic Count Model
@@ -135,7 +135,7 @@ token_pattern: regexp denoting what constitutes a token
 min_df: ignore words that have a document frequency less than the given threshold
 stop_words: ignore common English words ("the", "a", ...)
 """
-vectorizer  = TfidfVectorizer(ngram_range=(1, 1), token_pattern=r'\b\w+\b', min_df=1, stop_words='english')
+vectorizer  = TfidfVectorizer(binary=True, ngram_range=(1, 1), token_pattern=r'\b\w+\b', min_df=1, stop_words='english')
 corpus      = get_feature(filtered, 'title')
 
 X = vectorizer.fit_transform(corpus)
