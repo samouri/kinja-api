@@ -2,6 +2,7 @@
 *.sublime-workspace
 *.gem
 *.rbc
+*.pyc
 /.config
 /coverage/
 /InstalledFiles
