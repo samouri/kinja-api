@@ -11,6 +11,8 @@
 /test/version_tmp/
 /tmp/
 
+Dataset/output/*
+
 ## Specific to RubyMotion:
 .dat*
 .repl_history
