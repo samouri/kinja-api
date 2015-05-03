@@ -25,7 +25,7 @@ parameters = {
 
 if __name__ == "__main__":
 
-    data = ArticleDataset(length=4000)
+    data = ArticleDataset(length=4000, year="08")
 
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1, scoring='accuracy', cv=3)
     

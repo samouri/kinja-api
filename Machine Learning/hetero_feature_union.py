@@ -106,7 +106,6 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, posts):
-        pp(posts)
         features = np.recarray(shape=(len(posts),),
                                dtype=[('subject', object), ('body', object)])
         for i, text in enumerate(posts):
@@ -179,7 +178,6 @@ test = fetch_20newsgroups(random_state=1,
                           categories=categories,
                           )
 
-# print(train.target[:3])
 
 pipeline.fit(train.data[:3], train.target[:3])
 sys.exit()

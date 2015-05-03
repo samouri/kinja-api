@@ -8,7 +8,7 @@ require 'ostruct'
 require 'json'
 require 'pp'
 
-article_source = "../output/articles_clean.json"
+article_source = "../output/articles.json"
 viewcount_source = "../output/viewcounts.json"
 articles = []
 viewcounts = []
@@ -19,11 +19,10 @@ f = File.open(article_source, "r:UTF-8") { |f|
 	articles = f.readlines.map { |e| JSON.parse(e.chomp!) }
 }
 
-v = File.open(viewcount_source, "r") { |f|
-	viewcounts = JSON.parse(f.read)
-}
+viewcounts = JSON.parse(File.read(viewcount_source))
 
 articles.keep_if{ |e| 
+
 	e['id'] = ID_REGEX.match(e['link'])[1]
 	
 	if viewcounts.key?(e['id'])
@@ -33,14 +32,14 @@ articles.keep_if{ |e|
 
 		true	
 	else
-		pp e['id']
-		
+		pp e['id'], e['link']
+
 		false
 	end
 
 }
 
-File.open("articles_complete.json", "w+") { |f|
+File.open("../output/articles_complete.json", "w+") { |f|
 	f.puts(articles.to_json)
 }
 
