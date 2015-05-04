@@ -180,6 +180,6 @@ test = fetch_20newsgroups(random_state=1,
 
 
 pipeline.fit(train.data[:3], train.target[:3])
-sys.exit()
+
 y = pipeline.predict(test.data)
 print(classification_report(y, test.target))

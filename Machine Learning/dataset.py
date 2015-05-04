@@ -11,10 +11,10 @@ articles_labeled_filename = "../Dataset/output/articles_labeled.json"
 
 class ArticleDataset:
     
-    Labels = ['VeryUnpopular', 'Unpopular', 'Average', 'Popular', 'VeryPopular']
+    Label_Names = {5: ['VeryUnpopular', 'Unpopular', 'Average', 'Popular', 'VeryPopular'], 3: ['Unpopular', 'Average', 'Popular']}
     
     _YEAR_REGEX = r'\d+\/\d+\/(\d+)'
-    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label']
+    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label', 'date_published']
 
     def __init__(self, labeled=True, length=None, year=None):
         self.articles = self._read_in_dataset(labeled)
@@ -46,12 +46,14 @@ class ArticleDataset:
             pos = matched.start()
             decoded, pos = decoder.raw_decode(j, pos)
             yield decoded
+    
     def _content_filter(self, x):
         if 'content' in x:
             return True
         else:
             # print x['id']
             return False
+    
     def _read_in_dataset(self, labeled=True):
         # read the json articles into data
         if labeled:
@@ -65,6 +67,7 @@ class ArticleDataset:
         filtered = filter(self._content_filter, data)
 
         return filtered
+    
     def _get_year(self, year):
 
         def f(article):
