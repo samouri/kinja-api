@@ -1,46 +1,73 @@
 Predicting Gawker
 ===================
 
-To follow is a list of the directory structure and the meaning behind it:
+To follow is an outline of the directory structure and a description 
+of its components:
 
 1. Dataset
-    1.a Inputs
-    1.b Outputs
+    1.a Input
+    1.b Output
     2.c Scripts
 2. Machine Learning
 3. Preprocessing
 
-Datasets
+Dataset
 ----------
-This folder contains three folders within it.  All of the files within it are related to generating the dataset or the graphs.  This means downloading html, scraping, etc.
+This folder contains This means downloading html,
+scraping, etc.
 
-    Inputs
+    Input
     -------
-    This has all of the text files that we generated that act as inputs to scripts.  Really just the URLs for gawker articles
+    Contains article url files used as input to the scripts.
 
-    Outputs
+    Output
     --------
-    This is where all of the outputs from the scripts when.  For example all of the htmls, the linkgraph, articles.json, etc.
+    Contains the json representation of our dataset (articles_labeled.json),
+    and other files used to create the full dataset. These are the results
+    of the script files. Files in the Output folder are generally used for
+    processing in our attempts in Machine Learning. 
     
     Scripts
     --------
-    This is where we placed all of the bash and ruby scripts that performed all of the work.  
-    htmls.sh  --> downloads all of the html when given the url-list
-    htmlsWatir.rb --> deprecated file.  Was a proposed solution to the viewcounts issue. By using a chromium webdriver to run the AJAX and wait for viewcounts to exist
-    urls.sh   --> generates the url list from the sitemap
-    scrape.rb --> scrapes all of the html 
-    viewcounts.sh --> dowmloads all of the viewcounts and prints to stdout in json format
-    generate_linkgraph.rb --> reads through htmls and generates a directed graph where nodes are articles and edges are links between them
-    add_viewcounts.rb/add_weekend_hour.rb --> adds to articles.json extra data
+    Contains bash and ruby scripts used to build the dataset and graphs.
+
+    * htmls.sh  				Downloads all of the html when given the url-list.
+    
+    * htmlsWatir.rb 			(Deprecated file) Was a proposed solution to the
+    							viewcounts issue. By using a chromium webdriver
+		    					to run the AJAX and wait for viewcounts to exist.
+    
+    * urls.sh   				Generates list of article urls from the sitemap.
+    
+    * scrape.rb 				Scrapes article html for relevant article 
+    							characteristics.
+    
+    * viewcounts.sh 			Dowmloads viewcounts for every article and prints
+    							to stdout in json format.
+    
+    * generate_linkgraph.rb 	Reads through htmls and generates a directed graph where
+    							nodes are articles and edges are links between them.
+    
+    * add_viewcounts.rb 		Adds article view counts to article dataset. Each
+    							article is given the number of views it received.
+    							Usese the result from viewcounts.sh.
+    
+    * add_weekend_hour.rb 		Adds to time information to article dataset. Article
+    							objects are given a boolean describing whether they
+    							were published on a weekend and the hour in which they
+    							were published on a 24-hour clock.
 
 Preprocessing and Dataset Analysis
 -------------
-This folder contains the Python files that were used to create and analyze tag and link networks and to preprocess the data.
+Contains the Python files that were used to create and analyze tag and
+link networks and to preprocess the data.
 
 Machine Learning
 ---------------
-This folder contains all of the work we did to create machine learning algorithms to predict viewcount based on article features
+This folder contains all of the work we did to create machine learning
+algorithms to predict viewcount based on article features
 
-dataset.py --> A file we included in every other file.  It imports the dataset and provides helper functions to access it in useful ways
+dataset.py --> A file we included in every other file.  It imports the dataset
+and provides helper functions to access it in useful ways
 pipeline.py --> Our most thourough attempt at utilizing all of the features
 
