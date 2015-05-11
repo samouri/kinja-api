@@ -2,33 +2,34 @@ Predicting Gawker
 ===================
 
 To follow is an outline of the directory structure and a description 
-of its components:
+of its components. Detailed descriptions of individual files are provided
+at the top of each script:
 
 1. Dataset
     1.a Input
     1.b Output
     2.c Scripts
-2. Machine Learning
-3. Preprocessing
+2. Preprocessing and Dataset Analysis
+3. Machine Learning
 
 Dataset
-----------
+-------
 This folder contains This means downloading html,
 scraping, etc.
 
     Input
-    -------
+    -----
     Contains article url files used as input to the scripts.
 
     Output
-    --------
+    ------
     Contains the json representation of our dataset (articles_labeled.json),
     and other files used to create the full dataset. These are the results
     of the script files. Files in the Output folder are generally used for
     processing in our attempts in Machine Learning. 
     
     Scripts
-    --------
+    -------
     Contains bash and ruby scripts used to build the dataset and graphs.
 
     * htmls.sh  				Downloads all of the html when given the url-list.
@@ -58,16 +59,31 @@ scraping, etc.
     							were published on a 24-hour clock.
 
 Preprocessing and Dataset Analysis
--------------
+----------------------------------
 Contains the Python files that were used to create and analyze tag and
-link networks and to preprocess the data.
+link networks and to preprocess the data. A detailed description of 
+this component is provided in a README.txt inside the folder.
 
 Machine Learning
----------------
-This folder contains all of the work we did to create machine learning
-algorithms to predict viewcount based on article features
+----------------
+Contains scripts used in performing Supervised Learning with the dataset.
+Using a classifier, we predict the number of views an article will receive
+based on its features.
 
-dataset.py --> A file we included in every other file.  It imports the dataset
-and provides helper functions to access it in useful ways
-pipeline.py --> Our most thourough attempt at utilizing all of the features
+* dataset.py 				Defines an ArticleDataset class used to simplify
+							importing the dataset and extracting features.
+							Included in any script using the dataset for analysis.
+
+* pipeline.py  				Combines article features to train a classifier and
+							tests accuracy of predictions. This script is our primary
+							attempt at article classification. 
+
+* transformers.py  			Defines custom transformers used in pipeline.py.
+
+* label.py  				Labels the dataset. Can be set to divide
+							articles into either 3 or 5 popularity classes.
+							(3: Unpopular, Average Popular
+							 5: VeryUnpopular, Unpopular, Average, Popular, VeryPopular)
+
+
 
