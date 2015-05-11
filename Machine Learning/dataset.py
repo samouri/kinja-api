@@ -26,7 +26,7 @@ class ArticleDataset:
     Label_Names = {5: ['VeryUnpopular', 'Unpopular', 'Average', 'Popular', 'VeryPopular'], 3: ['Unpopular', 'Average', 'Popular']}
     
     _YEAR_REGEX = r'\d+\/\d+\/(\d+)'
-    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label', 'date_published', 'is_weekend', 'hour']
+    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label', 'date_published', 'is_weekend', 'hour', 'content_length']
 
     def __init__(self, labeled=True, length=None, year=None):
         self.articles = self._read_in_dataset(labeled)
@@ -102,6 +102,8 @@ class ArticleDataset:
             return map(lambda x:" ".join(x['tags']), self.articles)
         elif key == 'label':
             return map(lambda x:x['label'], self.articles)
+        elif key == 'content_length':
+            return map(lambda x:len(x), self.get_feature('content'))
         else:
             return map(lambda x:[x[key]], self.articles)
 
