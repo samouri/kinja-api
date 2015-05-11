@@ -9,7 +9,7 @@ of this class reads in the article json. The class supplies some helper
 functions to easily pull specific features and write to JSON.
 
 An instance of the ArticleDataset class can be specified to contain a
-certain year or labeled/unlabeled versions.
+certain year or labeled/unlabeled versions (note: default is labeled).
 """
 
 import sys
