@@ -33,9 +33,9 @@ This folder contains three folders within it.  All of the files within it are re
     generate_linkgraph.rb --> reads through htmls and generates a directed graph where nodes are articles and edges are links between them
     add_viewcounts.rb/add_weekend_hour.rb --> adds to articles.json extra data
 
-Preprocessing
+Preprocessing and Dataset Analysis
 -------------
-This folder contains all of the NTLK scripts
+This folder contains the Python files that were used to create and analyze tag and link networks and to preprocess the data.
 
 Machine Learning
 ---------------
