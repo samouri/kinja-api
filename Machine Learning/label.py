@@ -1,4 +1,21 @@
 #!/usr/bin/env python
+"""
+====================
+Labeling the Dataset
+====================
+
+This script is used to label, and relabel, the dataset. Articles are labeled
+according to the year they were published in and the number of views they
+received.
+
+Each year has its popularity cutoffs. These cutoffs are calculated before labeling.
+There can be 3 or 5 divisions of popularity:
+    - Unpopular, Average, Popular
+    - VeryUnpopular, Unpopular, Average, Popular, VeryPopular
+
+The number of divisions is set by NUM_CUTOFFS. After labeling, the articles are
+written to a JSON file.
+"""
 
 import json
 import re
@@ -9,10 +26,8 @@ from collections import defaultdict
 from pprint import pprint as pp
 
 ###############################################################################
-# Setup
+# Label Class
 ###############################################################################
-
-YEAR_REGEX = r'\d+\/\d+\/(\d+)'
 
 class Label:
     VeryUnpopular, Unpopular, Average, Popular, VeryPopular = range(1, 6)
@@ -20,13 +35,21 @@ class Label:
     three = [Unpopular, Average, Popular]
     div = {3: three, 5: five}
 
+###############################################################################
+# Setup
+###############################################################################
+
+OUTPUT_FILENAME = '../Dataset/output/articles_labeled.json'
+YEAR_REGEX      = r'\d+\/\d+\/(\d+)'
+NUM_CUTOFFS     = 3
+
 data = ArticleDataset(labeled=False)
 
 ###############################################################################
 # Build Boundaries
 ###############################################################################
 
-boundaries      = defaultdict(dict)
+cutoffs         = defaultdict(dict)
 uniquedict      = defaultdict(list)
 nonuniquedict   = defaultdict(list)
 
@@ -37,7 +60,7 @@ for article in data:
 
 for dictionary in (uniquedict, nonuniquedict):
     for year in sorted(dictionary):
-        num_segments = 3
+        num_segments = NUM_CUTOFFS
         arr = np.array(dictionary[year])
         percentiles = []
         for i in range(1, num_segments):
@@ -48,9 +71,9 @@ for dictionary in (uniquedict, nonuniquedict):
         percentiles.append(100000000) # last level is anything below 100,000,000 views
 
         if dictionary == uniquedict:
-            boundaries["unique"][year] = percentiles
+            cutoffs["unique"][year] = percentiles
         else:
-            boundaries["nonunique"][year] = percentiles
+            cutoffs["nonunique"][year] = percentiles
 
 ###############################################################################
 # Label
@@ -58,7 +81,7 @@ for dictionary in (uniquedict, nonuniquedict):
 
 def label(year, article, view_type="unique"):
     views = article['views'][view_type]
-    level = boundaries[view_type][year]
+    level = cutoffs[view_type][year]
     labels = Label.div[len(level)]
 
     for i in xrange(len(level)):
@@ -74,5 +97,5 @@ for article in data:
 # Write to file
 ###############################################################################
 
-with open('../Dataset/output/articles_labeled.json', 'w') as outfile:
+with open(OUTPUT_FILENAME, 'w') as outfile:
     json.dump(data.articles, outfile)

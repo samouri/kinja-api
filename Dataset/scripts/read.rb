@@ -4,13 +4,9 @@ require 'ostruct'
 require 'json'
 require 'pp'
 
-source = "../output/article_stats.json"
-articles = []
+source = "../output/articles_labeled.json"
 
-File.open(source, "r:UTF-8") { |f|
-	articles = JSON.parse(f.read)
-}
+articles = JSON.parse(File.read(source, :encoding => "UTF-8"))
 
 # 132,973 articles
-
-pp articles
+pp articles.length

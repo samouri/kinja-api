@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+"""
+===================
+Custom Transformers
+===================
+
+The transformers described in this module are used to do either one of two
+things. Certian transormers, such as the PictureCountTransformer, are used
+to fully convert raw features into feature vectors. Others, like
+AuthorTransformer, prepare raw features for the next transformer, to then be
+fully converted into feature vectors (in the Author scenario, AuthorTransformer
+prepares the author feature for the DictVecotrizer by creating a dictionary
+for each sample).
+"""
+
 from dataset import *
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -86,6 +101,53 @@ class TitleStats(BaseEstimator, TransformerMixin):
                     'questions': title.count('?')}
                 for title in titles]
 
+class ContentTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, contents, **transform_params):
+        return contents
+
+class ContentStatsTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, contents, **transform_params):
+        return [{   'length': len(content)}
+                for content in contents]
+
+class DateTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, dates, **transform_params):
+        return map(lambda x: {"date":x}, dates)
+
+class HourTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, hours, **transform_params):
+        return map(lambda x: [x], hours)
+
+class IsWeekendTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, is_weekends, **transform_params):
+        def f(is_weekend):
+            if is_weekend:
+                return [1]
+            else:
+                return [0]
+
+        return map(f, is_weekends)
+
 class DenseTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None, **fit_params):
@@ -106,6 +168,7 @@ class ShapeTransformer(BaseEstimator, TransformerMixin):
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
+        print(X.shape)
         return X
 
     def fit(self, X, y=None, **fit_params):

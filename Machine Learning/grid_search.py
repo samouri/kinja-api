@@ -46,4 +46,3 @@ if __name__ == "__main__":
     print 'Precision:', precision_score(y_test, predictions)
     print 'Recall:', recall_score(y_test, predictions)
 
-

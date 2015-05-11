@@ -4,19 +4,19 @@
 
 # $ruby scrape.rb INPUT-FOLDER HOST OUTPUT GET-COMMENTS
 # 
-# This script takes in a list of urls (input) and a host website string, and 
-# it creates json object sfor each article. It then prints each JSON object to
+# Takes in a list of urls (input) and a host website string, and 
+# it creates json objects for each article. It then prints each JSON object to
 # the given output file.
 #
-# The host werbsite needs to be one of the Kinja sites. URLs need to be in a valid
+# The host website needs to be one of the Kinja sites. URLs need to be in a valid
 # format, as indicated in VALID_REGEX. The script handles invalid urls (ex. gaw.com).
 # 
 # GET-COMMENTS is a boolean that tells the script whether to also process comments.
 # 
 # Defaults
-# * INPUT-FOLDER= "../output/1000-article-htmls/"
+# * INPUT-FOLDER= "../output/htmls"
 # * HOST= "gawker"
-# * OUTPUT= "output.json"
+# * OUTPUT= "../output/articles.json"
 # * GET-COMMENTS= false
 
 require 'open-uri'
@@ -26,32 +26,34 @@ require 'pp'
 require 'ruby-progressbar'
 
 ###############################################################################
-# 1 Setup
+# Setup
 ###############################################################################
 
 NUM_THREADS 	= 1
 
 host           	= 'gawker'
 input			= '../output/htmls'
-output			= File.open("../output/articles.json","w+")
+output          = '../output/articles.json'
 get_comments	= false
+
+output_file     = File.open("../output/articles.json","w+")
 
 if ARGV.length > 0 then input = ARGV[0] end
 if ARGV.length > 1 then host = ARGV[1] end
-if ARGV.length > 2 then output = File.open(ARGV[2], "w+") end
+if ARGV.length > 2 then output_file = File.open(ARGV[2], "w+") end
 if ARGV.length > 3 then get_comments = ARGV[3].to_b end
 
 VALID_REGEX		= /^http:\/\/\w*\.?#{Regexp.quote(host)}.com\/(\d+)\/[\w-]+/ # http://gawker.com/111361/penguins-march-on-hollywood
 BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
-filepaths = Dir.glob("#{input}/*")
-num_articles = filepaths.length
-filepaths = filepaths.each_slice( (filepaths.length / NUM_THREADS.to_f).round ).to_a
+filepaths       = Dir.glob("#{input}/*")
+num_articles    = filepaths.length
+filepaths       = filepaths.each_slice( (filepaths.length / NUM_THREADS.to_f).round ).to_a
 
-output.sync = true
+output_file.sync = true
 
 ###############################################################################
-# 2 Scrape
+# Scrape
 ###############################################################################
 
 pb = ProgressBar.create(:format     => '%a %B %p%% %r articles/sec', :total => num_articles)
@@ -123,7 +125,7 @@ threads = (0...NUM_THREADS).map do |i|
                     #pp "NO VIEW COUNT"
                     next
                 end
-TODO: add viewcount in 
+                TODO: add viewcount in; NOTE! we added view counts in another script
 =end
                 # tags
                 if (nodeset = article_page.css('a.first-tag,div#taglist')).length > 0
@@ -183,7 +185,7 @@ TODO: add viewcount in
             end
 
             # write JSON to output
-            output.puts(article.to_json)
+            output_file.puts(article.to_json)
             pb.increment()
         end  	
     end

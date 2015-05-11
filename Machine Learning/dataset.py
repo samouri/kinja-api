@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+"""
+=================================================
+Article Dataset Class
+=================================================
+
+This class creates and manages the article dataset. Creating an instance
+of this class reads in the article json. The class supplies some helper 
+functions to easily pull specific features and write to JSON.
+
+An instance of the ArticleDataset class can be specified to contain a
+certain year or labeled/unlabeled versions.
+"""
 
 import sys
 import json
@@ -14,7 +26,7 @@ class ArticleDataset:
     Label_Names = {5: ['VeryUnpopular', 'Unpopular', 'Average', 'Popular', 'VeryPopular'], 3: ['Unpopular', 'Average', 'Popular']}
     
     _YEAR_REGEX = r'\d+\/\d+\/(\d+)'
-    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label', 'date_published']
+    _FEATURES = ['pic_count', 'title', 'author', 'content', 'tags', 'label', 'date_published', 'is_weekend', 'hour']
 
     def __init__(self, labeled=True, length=None, year=None):
         self.articles = self._read_in_dataset(labeled)
