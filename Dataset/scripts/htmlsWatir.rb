@@ -1,15 +1,6 @@
-# $ruby htmls.rb INPUT-FILE HOST
-# 
-# This script takes in a list of urls (input) and a host website string, and it
-# downloads the htmls of each page to a separate file.
-#
-# Html files are placed in subfolder: ./articles, with a number for the name.
-# The host werbsite needs to be one of the Kinja sites. URLs need to be in a valid
-# format, as indicated in VALID_REGEX. The script handles invalid urls (ex. gaw.com).
-# 
-# Defaults:
-# * INPUT-FILE= "./input/gawker_urls.txt"
-# * HOST= "gawker"
+# performs the same job as htmls.sh EXCEPT this uses a browser driver and waits until viewcounts is part of the html. deemed a bad solution compared to separately performing the query for viewcounts because this is slow
+
+# DEPRECATED FILE
 
 require 'open-uri'
 require 'nokogiri'

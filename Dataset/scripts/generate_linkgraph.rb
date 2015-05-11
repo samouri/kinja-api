@@ -10,8 +10,8 @@ require 'ruby-progressbar'
 # 1 Setup
 ###############################################################################
 
-host           	= 'gawker'
 input			= '../output/htmls'
+host           	= 'gawker'
 output			= File.open("../output/linkgraph.json","w+")
 
 if ARGV.length > 0 then input = ARGV[0] end
@@ -23,12 +23,13 @@ BRANCH_REGEX 	= /(\w+).#{Regexp.quote(host)}.com/
 
 filepaths = Dir.glob("#{input}/*")
 num_articles = filepaths.length
+adjacency_hash = {}
 
 pb = ProgressBar.create(:format     => '%a %B %p%% %r articles/sec', :total => num_articles)
 
 for filepath in filepaths
     f = File.open(filepath)
-    if f.size == 0 then next end #pp "NO HTML"; next end
+    if f.size == 0 then next end
     article_page = Nokogiri::HTML(f)
     f.close
 
@@ -66,4 +67,4 @@ end
 # write JSON to output
 output.puts(adjacency_hash.to_json)
 
-p "done generating adjacency grap"
+p "done generating adjacency graph"

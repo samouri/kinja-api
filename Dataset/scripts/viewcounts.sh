@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script has issues where output is in wrong order
+# This script downloads all of the gawker article viewcounts and outputs it to stdout in json format.  also uses xargs for multithreading
 
 json() { 
   regex="([0-9]{5,20})"
   url="$1";
   [[ $url =~ $regex ]];
-  id="${BASH_REMATCH[1]}";
+  id="${BASH_REMATCH[1]}"; # article id
   viewcount="$(curl --silent "http://kinja.com/api/analytics/stats/post?id=$id")"
   unique="$( echo "${viewcount}" | grep -Po '"unique":.*?[^\\],' | sed 's/[^0-9]*//g')"
   nonUnique="$( echo "${viewcount}" | grep -Po '"nonUnique":.*?[^\\],' | sed 's/[^0-9]*//g')"

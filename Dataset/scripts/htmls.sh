@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script uses xargs in order to download all of the gawker url articles.  xargs is used as an easy way to multithread (-P feature of xargs).
+
 html() { 
   url="$1";
   regex="[^0-9a-z.-]"

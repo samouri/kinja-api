@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Various tests of different classifiers.  was used as a temp file to test out classifiers and features
+
 import sys
 from dataset import *
 
